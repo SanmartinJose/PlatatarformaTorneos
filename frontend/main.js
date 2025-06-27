@@ -1,5 +1,5 @@
 import { generarFormularioEquipos, obtenerDatosEquipos } from './js/formulario.js';
-import { generarLlavesHTML } from './torneo.js'; // ahora apunta al archivo raíz de lógica de torneos
+import { generarLlavesHTML } from './torneo.js'; 
 import html2pdf from 'html2pdf.js';
 
 const configForm = document.getElementById('configForm');
@@ -9,26 +9,20 @@ const exportarPDFBtn = document.getElementById('exportarPDFBtn');
 const llavesContainer = document.getElementById('llavesContainer');
 const formatoSelect = document.getElementById('formato');
 const configSuizo = document.getElementById('configSuizo');
-const tablaPosicionesContainer = document.getElementById('tablaPosicionesContainer'); // ← Asegúrate de que exista
+const tablaPosicionesContainer = document.getElementById('tablaPosicionesContainer');
 
 let cantidadEquipos = 0;
 
-// Mostrar campos dinámicos según el formato seleccionado
 formatoSelect.addEventListener('change', () => {
   const formato = formatoSelect.value;
-
-  // Mostrar/ocultar input de rondas
   if (configSuizo) {
     configSuizo.classList.toggle('d-none', formato !== 'suizo');
   }
-
-  // Mostrar/ocultar tabla de posiciones
   if (tablaPosicionesContainer) {
     tablaPosicionesContainer.classList.toggle('d-none', formato !== 'suizo');
   }
 });
 
-// Generar formulario dinámico según cantidad de equipos
 configForm.addEventListener('submit', (e) => {
   e.preventDefault();
   cantidadEquipos = parseInt(document.getElementById('numEquipos').value);
@@ -38,21 +32,26 @@ configForm.addEventListener('submit', (e) => {
   }
 });
 
-// Generar las llaves según el formato y equipos
 generarLlavesBtn.addEventListener('click', () => {
-  const equipos = obtenerDatosEquipos();
+  let equipos = obtenerDatosEquipos();
+  equipos = equipos.filter(eq => eq && eq.nombre && eq.capitan); // Filtra vacíos o incompletos
   const formato = formatoSelect.value;
+
+  if (equipos.length < 2) {
+    llavesContainer.innerHTML = `<p class="text-danger">Debes ingresar al menos dos equipos completos (nombre y capitán).</p>`;
+    exportarPDFBtn.classList.add('d-none');
+    return;
+  }
 
   if (formato === 'suizo') {
     const rondas = parseInt(document.getElementById('numRondas').value || '3');
-    window.totalRondasSuizas = rondas; // pasa a variable global (usada en suizo.js)
+    window.totalRondasSuizas = rondas;
   }
 
   llavesContainer.innerHTML = generarLlavesHTML(equipos, formato);
   exportarPDFBtn.classList.remove('d-none');
 });
 
-// Exportar a PDF
 exportarPDFBtn.addEventListener('click', () => {
   html2pdf().from(llavesContainer).save('llaves_torneo.pdf');
 });

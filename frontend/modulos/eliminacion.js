@@ -1,82 +1,84 @@
 let rondaActual = 1;
 let equiposEnJuego = [];
-let ganadoresRonda = [];
 let partidosRondaActual = [];
-let finalGanador = null;
-let finalPerdedor = null;
-let tercerLugarGanador = null;
 let semifinalistasPerdedores = [];
 let finalJugado = false;
 let tercerLugarJugado = false;
+let finalGanador = null;
+let finalPerdedor = null;
+let tercerLugarGanador = null;
 
 export function generarRondaEliminacion(equipos) {
+  // Siempre filtrar equipos válidos por si acaso
+  equipos = equipos.filter(eq => eq && eq.nombre && eq.capitan);
   rondaActual = 1;
-  equiposEnJuego = barajarEquipos(equipos);
-  ganadoresRonda = [];
-  partidosRondaActual = [];
-  finalGanador = null;
-  finalPerdedor = null;
-  tercerLugarGanador = null;
+  equiposEnJuego = barajarEquipos(equipos.map((eq, i) => ({ ...eq, id: i })));
   semifinalistasPerdedores = [];
   finalJugado = false;
   tercerLugarJugado = false;
+  finalGanador = null;
+  finalPerdedor = null;
+  tercerLugarGanador = null;
   clearContenedor();
-  return renderRondaEliminacion(equiposEnJuego, rondaActual);
+  renderRondaEliminacion(equiposEnJuego, rondaActual);
+  return document.getElementById("llavesContainer").innerHTML; // Retorna el HTML generado
 }
 
 function renderRondaEliminacion(equipos, ronda) {
   partidosRondaActual = [];
+  clearContenedor();
+
   let html = `<h3>Ronda ${ronda}</h3><div class="row">`;
 
   for (let i = 0; i < equipos.length; i += 2) {
     const eq1 = equipos[i];
-    const eq2 = equipos[i + 1] || { nombre: 'Libre', capitan: '-' };
+    const eq2 = equipos[i + 1] || { nombre: 'Libre', capitan: '-', id: 'libre' };
 
-    partidosRondaActual.push({ equipo1: eq1.nombre, equipo2: eq2.nombre, ganador: null });
+    partidosRondaActual.push({ equipo1: eq1, equipo2: eq2, ganador: null });
 
     html += `
       <div class="col-md-6 mb-2">
-        <div class="card p-2 text-center" data-equipo1="${eq1.nombre}" data-equipo2="${eq2.nombre}">
+        <div class="card p-2 text-center" data-id1="${eq1.id}" data-id2="${eq2.id}">
           <strong>${eq1.nombre}</strong><br><small>Capitán: ${eq1.capitan}</small>
           <br>vs<br>
           <strong>${eq2.nombre}</strong><br><small>Capitán: ${eq2.capitan}</small><br>
-          <button class="btn btn-sm btn-success mt-2" onclick="seleccionarGanador('${eq1.nombre}', ${ronda})">${eq1.nombre}</button>
-          <button class="btn btn-sm btn-success mt-1" onclick="seleccionarGanador('${eq2.nombre}', ${ronda})" ${eq2.nombre === 'Libre' ? 'disabled' : ''}>${eq2.nombre}</button>
+          <button class="btn btn-sm btn-success mt-2" onclick="seleccionarGanador(${eq1.id}, ${ronda})">${eq1.nombre}</button>
+          <button class="btn btn-sm btn-success mt-1" onclick="seleccionarGanador(${eq2.id}, ${ronda})" ${eq2.id === 'libre' ? 'disabled' : ''}>${eq2.nombre}</button>
           <div class="ganador-texto mt-2"></div>
         </div>
       </div>
     `;
   }
-
   html += `</div>`;
-  return html;
+  document.getElementById("llavesContainer").innerHTML = html;
 }
 
 function renderFinal(eq1, eq2) {
-  partidosRondaActual = [{ equipo1: eq1.nombre, equipo2: eq2.nombre, ganador: null }];
-  return `
+  partidosRondaActual = [{ equipo1: eq1, equipo2: eq2, ganador: null }];
+  clearContenedor();
+  document.getElementById("llavesContainer").innerHTML = `
     <h3 class="mt-4 text-center">🏁 Final - Primer Lugar</h3>
-    <div class="card text-center p-3" data-equipo1="${eq1.nombre}" data-equipo2="${eq2.nombre}">
+    <div class="card text-center p-3" data-id1="${eq1.id}" data-id2="${eq2.id}">
       <strong>${eq1.nombre}</strong><br><small>Capitán: ${eq1.capitan}</small>
       <br>vs<br>
       <strong>${eq2.nombre}</strong><br><small>Capitán: ${eq2.capitan}</small><br>
-      <button class="btn btn-danger mt-2" onclick="seleccionarGanadorFinal('${eq1.nombre}', '${eq2.nombre}')">${eq1.nombre}</button>
-      <button class="btn btn-danger mt-2" onclick="seleccionarGanadorFinal('${eq2.nombre}', '${eq1.nombre}')">${eq2.nombre}</button>
+      <button class="btn btn-danger mt-2" onclick="seleccionarGanadorFinal(${eq1.id}, ${eq2.id})">${eq1.nombre}</button>
+      <button class="btn btn-danger mt-2" onclick="seleccionarGanadorFinal(${eq2.id}, ${eq1.id})">${eq2.nombre}</button>
       <div class="ganador-texto mt-2"></div>
     </div>
   `;
 }
 
 function renderTercerLugar(eq1, eq2) {
-  return `
+  document.getElementById("llavesContainer").innerHTML += `
     <h3 class="mt-4 text-light">🪖 Partido por Tercer Lugar</h3>
     <div class="card text-center p-3">
       <strong>${eq1.nombre}</strong><br><small>Capitán: ${eq1.capitan}</small>
       <br>vs<br>
       <strong>${eq2.nombre}</strong><br><small>Capitán: ${eq2.capitan}</small>
       <br>
-      <button class="btn btn-info mt-2" onclick="definirTercerLugar('${eq1.nombre}')">${eq1.nombre} gana</button>
-      <button class="btn btn-info mt-2" onclick="definirTercerLugar('${eq2.nombre}')">${eq2.nombre} gana</button>
+      <button class="btn btn-info mt-2" onclick="definirTercerLugar(${eq1.id})">${eq1.nombre} gana</button>
+      <button class="btn btn-info mt-2" onclick="definirTercerLugar(${eq2.id})">${eq2.nombre} gana</button>
     </div>
   `;
 }
@@ -90,41 +92,56 @@ function barajarEquipos(equipos) {
   return array;
 }
 
-window.seleccionarGanador = function(nombreGanador, ronda) {
+window.seleccionarGanador = function(idGanador, ronda) {
   if (ronda !== rondaActual) return;
-  const partido = partidosRondaActual.find(p => p.equipo1 === nombreGanador || p.equipo2 === nombreGanador);
+  const partido = partidosRondaActual.find(p => p.equipo1.id === idGanador || p.equipo2.id === idGanador);
   if (!partido) return;
-  partido.ganador = nombreGanador;
+  partido.ganador = idGanador;
   actualizarUIResultados();
   if (partidosRondaActual.every(p => p.ganador !== null)) mostrarResumenRonda();
 };
 
-window.seleccionarGanadorFinal = function(ganador, perdedor) {
-  finalGanador = equiposEnJuego.find(eq => eq.nombre === ganador);
-  finalPerdedor = equiposEnJuego.find(eq => eq.nombre === perdedor);
-  partidosRondaActual[0].ganador = ganador;
+window.seleccionarGanadorFinal = function(idGanador, idPerdedor) {
+  finalGanador = equiposEnJuego.find(eq => eq.id === idGanador);
+  finalPerdedor = equiposEnJuego.find(eq => eq.id === idPerdedor);
+  partidosRondaActual[0].ganador = idGanador;
   finalJugado = true;
   actualizarUIResultados();
-  const [eq1, eq2] = semifinalistasPerdedores;
-  document.getElementById("llavesContainer").innerHTML += renderTercerLugar(eq1, eq2);
+  if (semifinalistasPerdedores.length === 2) {
+    renderTercerLugar(semifinalistasPerdedores[0], semifinalistasPerdedores[1]);
+  } else {
+    tercerLugarGanador = null;
+    tercerLugarJugado = true;
+    mostrarResultadosFinal();
+  }
 };
 
-window.definirTercerLugar = function(nombre) {
-  tercerLugarGanador = nombre;
+window.definirTercerLugar = function(idGanador) {
+  const equipo = semifinalistasPerdedores.find(eq => eq.id === idGanador);
+  tercerLugarGanador = equipo?.nombre || 'No definido';
   tercerLugarJugado = true;
   mostrarResultadosFinal();
 };
 
 function actualizarUIResultados() {
   partidosRondaActual.forEach(({ equipo1, equipo2, ganador }) => {
-    const card = document.querySelector(`.card[data-equipo1="${equipo1}"][data-equipo2="${equipo2}"]`);
-    if (card) card.querySelector(".ganador-texto").innerHTML = ganador ? `<strong class="text-success">Ganador: ${ganador}</strong>` : "";
+    const card = document.querySelector(`.card[data-id1="${equipo1.id}"][data-id2="${equipo2.id}"]`);
+    if (card) {
+      let nombreGanador = ganador
+        ? [equipo1, equipo2].find(eq => eq.id === ganador)?.nombre || ''
+        : '';
+      card.querySelector(".ganador-texto").innerHTML = ganador ? `<strong class="text-success">Ganador: ${nombreGanador}</strong>` : "";
+    }
   });
 }
 
 function mostrarResumenRonda() {
   const llavesContainer = document.getElementById("llavesContainer");
-  const listaResultados = partidosRondaActual.map(p => `<li>${p.equipo1} vs ${p.equipo2} → <strong>${p.ganador}</strong></li>`).join('');
+  const listaResultados = partidosRondaActual.map(p =>
+    `<li>${p.equipo1.nombre} vs ${p.equipo2.nombre} → <strong>${
+      [p.equipo1, p.equipo2].find(eq => eq.id === p.ganador)?.nombre || ''
+    }</strong></li>`
+  ).join('');
   const html = `
     <div class="alert alert-warning mt-4" id="resumenRonda">
       <h5>¿Resultados correctos para la Ronda ${rondaActual}?</h5>
@@ -139,20 +156,36 @@ function mostrarResumenRonda() {
 window.confirmarSiguienteRonda = function () {
   document.getElementById("resumenRonda")?.remove();
 
-  const ganadores = partidosRondaActual.map(p => equiposEnJuego.find(eq => eq.nombre === p.ganador));
-  const perdedores = partidosRondaActual.map(p => p.equipo1 === p.ganador ? p.equipo2 : p.equipo1)
-    .filter(n => n !== 'Libre').map(n => equiposEnJuego.find(eq => eq.nombre === n));
+  const ganadores = partidosRondaActual.map(p => [p.equipo1, p.equipo2].find(eq => eq.id === p.ganador));
+  const perdedores = partidosRondaActual.map(p => [p.equipo1, p.equipo2].find(eq => eq.id !== p.ganador && eq.nombre !== 'Libre'))
+    .filter(Boolean);
 
-  if (ganadores.length === 2) {
+  // SEMIFINAL: Solo si quedan 4 equipos (dos partidos), hay tercer lugar
+  if (ganadores.length === 2 && equiposEnJuego.length === 4) {
     semifinalistasPerdedores = perdedores;
     equiposEnJuego = ganadores;
-    document.getElementById("llavesContainer").innerHTML += renderFinal(ganadores[0], ganadores[1]);
+    renderFinal(ganadores[0], ganadores[1]);
+    return;
+  }
+
+  // FINAL: Solo si quedan 2 equipos, o por "bye"
+  if (ganadores.length === 1 || (ganadores.length === 2 && equiposEnJuego.length === 2)) {
+    finalGanador = ganadores[0];
+    finalPerdedor = perdedores[0] || ganadores[1];
+    finalJugado = true;
+    if (semifinalistasPerdedores.length === 2) {
+      renderTercerLugar(semifinalistasPerdedores[0], semifinalistasPerdedores[1]);
+    } else {
+      tercerLugarGanador = null;
+      tercerLugarJugado = true;
+      mostrarResultadosFinal();
+    }
     return;
   }
 
   equiposEnJuego = ganadores;
   rondaActual++;
-  document.getElementById("llavesContainer").innerHTML += renderRondaEliminacion(equiposEnJuego, rondaActual);
+  renderRondaEliminacion(equiposEnJuego, rondaActual);
 };
 
 window.cancelarConfirmacion = function () {
@@ -160,7 +193,7 @@ window.cancelarConfirmacion = function () {
 };
 
 function mostrarResultadosFinal() {
-  if (!finalJugado || !tercerLugarJugado) return;
+  if (!finalJugado || (semifinalistasPerdedores.length === 2 && !tercerLugarJugado)) return;
 
   const llavesContainer = document.getElementById("llavesContainer");
   llavesContainer.innerHTML += `
@@ -180,14 +213,13 @@ function clearContenedor() {
 window.nuevoTorneo = function () {
   rondaActual = 1;
   equiposEnJuego = [];
-  ganadoresRonda = [];
   partidosRondaActual = [];
-  finalGanador = null;
-  finalPerdedor = null;
-  tercerLugarGanador = null;
   semifinalistasPerdedores = [];
   finalJugado = false;
   tercerLugarJugado = false;
+  finalGanador = null;
+  finalPerdedor = null;
+  tercerLugarGanador = null;
   clearContenedor();
   alert('¡Torneo reiniciado!');
 };

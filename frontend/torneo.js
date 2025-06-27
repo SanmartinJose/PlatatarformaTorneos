@@ -1,10 +1,14 @@
-// torneos.js
-
 import { generarRondaEliminacion } from './modulos/eliminacion.js';
 import { iniciarDobleEliminacion } from './modulos/doble.js';
 import { iniciarRondaSuiza } from './modulos/suizo.js';
 
 export function generarLlavesHTML(equipos, formato) {
+  // Filtrado de equipos incompletos, obligatorio aquí
+  equipos = (equipos || []).filter(eq => eq && eq.nombre && eq.capitan);
+
+  if (equipos.length < 2)
+    return `<p class="text-danger">Debes ingresar al menos dos equipos completos.</p>`;
+
   if (formato === 'eliminacion') {
     return generarRondaEliminacion(equipos);
   } else if (formato === 'doble') {
@@ -27,7 +31,6 @@ if (selectFormato) {
   });
 }
 
-// Función auxiliar para obtener datos desde el formulario principal
 export function obtenerDatosFormulario() {
   const numEquipos = parseInt(document.getElementById('numEquipos')?.value || '0');
   const formato = document.getElementById('formato')?.value;
@@ -40,6 +43,5 @@ export function obtenerDatosFormulario() {
       equipos.push({ nombre, capitan });
     }
   }
-
   return { equipos, formato };
 }
