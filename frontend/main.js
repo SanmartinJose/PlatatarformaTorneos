@@ -9,13 +9,22 @@ const exportarPDFBtn = document.getElementById('exportarPDFBtn');
 const llavesContainer = document.getElementById('llavesContainer');
 const formatoSelect = document.getElementById('formato');
 const configSuizo = document.getElementById('configSuizo');
+const tablaPosicionesContainer = document.getElementById('tablaPosicionesContainer'); // ← Asegúrate de que exista
 
 let cantidadEquipos = 0;
 
-// Mostrar campo de rondas si se selecciona formato suizo
+// Mostrar campos dinámicos según el formato seleccionado
 formatoSelect.addEventListener('change', () => {
+  const formato = formatoSelect.value;
+
+  // Mostrar/ocultar input de rondas
   if (configSuizo) {
-    configSuizo.classList.toggle('d-none', formatoSelect.value !== 'suizo');
+    configSuizo.classList.toggle('d-none', formato !== 'suizo');
+  }
+
+  // Mostrar/ocultar tabla de posiciones
+  if (tablaPosicionesContainer) {
+    tablaPosicionesContainer.classList.toggle('d-none', formato !== 'suizo');
   }
 });
 

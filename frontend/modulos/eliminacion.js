@@ -1,5 +1,3 @@
-// eliminacion.js - Versión final para cualquier número de equipos con flujo dividido
-
 let rondaActual = 1;
 let equiposEnJuego = [];
 let ganadoresRonda = [];
@@ -7,10 +5,9 @@ let partidosRondaActual = [];
 let finalGanador = null;
 let finalPerdedor = null;
 let tercerLugarGanador = null;
-let enFinal = false;
 let semifinalistasPerdedores = [];
-let tercerLugarJugado = false;
 let finalJugado = false;
+let tercerLugarJugado = false;
 
 export function generarRondaEliminacion(equipos) {
   rondaActual = 1;
@@ -20,10 +17,9 @@ export function generarRondaEliminacion(equipos) {
   finalGanador = null;
   finalPerdedor = null;
   tercerLugarGanador = null;
-  enFinal = false;
   semifinalistasPerdedores = [];
-  tercerLugarJugado = false;
   finalJugado = false;
+  tercerLugarJugado = false;
   clearContenedor();
   return renderRondaEliminacion(equiposEnJuego, rondaActual);
 }
@@ -64,9 +60,23 @@ function renderFinal(eq1, eq2) {
       <strong>${eq1.nombre}</strong><br><small>Capitán: ${eq1.capitan}</small>
       <br>vs<br>
       <strong>${eq2.nombre}</strong><br><small>Capitán: ${eq2.capitan}</small><br>
-      <button class="btn btn-danger mt-2" onclick="seleccionarGanadorFinal('${eq1.nombre}')">${eq1.nombre}</button>
-      <button class="btn btn-danger mt-2" onclick="seleccionarGanadorFinal('${eq2.nombre}')">${eq2.nombre}</button>
+      <button class="btn btn-danger mt-2" onclick="seleccionarGanadorFinal('${eq1.nombre}', '${eq2.nombre}')">${eq1.nombre}</button>
+      <button class="btn btn-danger mt-2" onclick="seleccionarGanadorFinal('${eq2.nombre}', '${eq1.nombre}')">${eq2.nombre}</button>
       <div class="ganador-texto mt-2"></div>
+    </div>
+  `;
+}
+
+function renderTercerLugar(eq1, eq2) {
+  return `
+    <h3 class="mt-4 text-light">🪖 Partido por Tercer Lugar</h3>
+    <div class="card text-center p-3">
+      <strong>${eq1.nombre}</strong><br><small>Capitán: ${eq1.capitan}</small>
+      <br>vs<br>
+      <strong>${eq2.nombre}</strong><br><small>Capitán: ${eq2.capitan}</small>
+      <br>
+      <button class="btn btn-info mt-2" onclick="definirTercerLugar('${eq1.nombre}')">${eq1.nombre} gana</button>
+      <button class="btn btn-info mt-2" onclick="definirTercerLugar('${eq2.nombre}')">${eq2.nombre} gana</button>
     </div>
   `;
 }
@@ -89,13 +99,19 @@ window.seleccionarGanador = function(nombreGanador, ronda) {
   if (partidosRondaActual.every(p => p.ganador !== null)) mostrarResumenRonda();
 };
 
-window.seleccionarGanadorFinal = function(nombreGanador) {
-  const partido = partidosRondaActual[0];
-  partido.ganador = nombreGanador;
-  finalGanador = equiposEnJuego.find(eq => eq.nombre === nombreGanador);
-  finalPerdedor = equiposEnJuego.find(eq => eq.nombre !== nombreGanador);
+window.seleccionarGanadorFinal = function(ganador, perdedor) {
+  finalGanador = equiposEnJuego.find(eq => eq.nombre === ganador);
+  finalPerdedor = equiposEnJuego.find(eq => eq.nombre === perdedor);
+  partidosRondaActual[0].ganador = ganador;
   finalJugado = true;
   actualizarUIResultados();
+  const [eq1, eq2] = semifinalistasPerdedores;
+  document.getElementById("llavesContainer").innerHTML += renderTercerLugar(eq1, eq2);
+};
+
+window.definirTercerLugar = function(nombre) {
+  tercerLugarGanador = nombre;
+  tercerLugarJugado = true;
   mostrarResultadosFinal();
 };
 
@@ -130,7 +146,7 @@ window.confirmarSiguienteRonda = function () {
   if (ganadores.length === 2) {
     semifinalistasPerdedores = perdedores;
     equiposEnJuego = ganadores;
-    generarTercerCuartoLugar(semifinalistasPerdedores);
+    document.getElementById("llavesContainer").innerHTML += renderFinal(ganadores[0], ganadores[1]);
     return;
   }
 
@@ -143,44 +159,8 @@ window.cancelarConfirmacion = function () {
   alert("Corrige los resultados seleccionando al equipo ganador nuevamente.");
 };
 
-function generarTercerCuartoLugar([eq1, eq2]) {
-  const html = `
-    <h3 class="mt-4 text-light">🪖 Partido por Tercer Lugar</h3>
-    <div class="card text-center p-3">
-      <strong>${eq1.nombre}</strong><br><small>Capitán: ${eq1.capitan}</small>
-      <br>vs<br>
-      <strong>${eq2.nombre}</strong><br><small>Capitán: ${eq2.capitan}</small>
-      <br>
-      <button class="btn btn-info mt-2" onclick="definirTercerLugar('${eq1.nombre}')">${eq1.nombre} gana</button>
-      <button class="btn btn-info mt-2" onclick="definirTercerLugar('${eq2.nombre}')">${eq2.nombre} gana</button>
-    </div>
-  `;
-  document.getElementById("llavesContainer").innerHTML += html;
-}
-
-window.definirTercerLugar = function(nombre) {
-  tercerLugarGanador = nombre;
-  tercerLugarJugado = true;
-
-  const resumen = `
-    <div class="alert alert-warning mt-4 text-center" id="resumenFinal">
-      <h5>¿Confirmar resultado del Tercer Lugar?</h5>
-      <p><strong>${nombre}</strong> gana el Tercer Lugar</p>
-      <button class="btn btn-success me-2" onclick="confirmarFinal()">Jugar Final</button>
-    </div>
-  `;
-  document.getElementById("llavesContainer").insertAdjacentHTML("beforeend", resumen);
-};
-
-window.confirmarFinal = function () {
-  document.getElementById("resumenFinal")?.remove();
-  enFinal = true;
-  const [eq1, eq2] = equiposEnJuego;
-  document.getElementById("llavesContainer").innerHTML += renderFinal(eq1, eq2);
-};
-
 function mostrarResultadosFinal() {
-  if (!tercerLugarJugado || !finalJugado) return;
+  if (!finalJugado || !tercerLugarJugado) return;
 
   const llavesContainer = document.getElementById("llavesContainer");
   llavesContainer.innerHTML += `
@@ -206,9 +186,8 @@ window.nuevoTorneo = function () {
   finalPerdedor = null;
   tercerLugarGanador = null;
   semifinalistasPerdedores = [];
-  tercerLugarJugado = false;
   finalJugado = false;
-  enFinal = false;
+  tercerLugarJugado = false;
   clearContenedor();
   alert('¡Torneo reiniciado!');
 };
